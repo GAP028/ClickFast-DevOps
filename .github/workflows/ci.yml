@@ -1,31 +1,74 @@
+
+# Nom de notre pipeline CI/CD
 name: ClickFast CI
+
+# Événements qui déclenchent automatiquement la pipeline
 on:
+  # Quand nous envoyons du code sur GitHub
   push:
+
+  # Quand nous proposons une modification du projet
   pull_request:
+
+# Les différentes tâches de notre pipeline
 jobs:
+
+  # PREMIÈRE TÂCHE : TESTER LE PROJET
   test:
+
+    # GitHub utilise une machine virtuelle Ubuntu
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+
+      # Récupérer le code depuis GitHub
+      # Version 5 : compatible avec Node.js 24
+      - name: Récupérer le code
+        uses: actions/checkout@v5
+
+      # Installer Node.js pour exécuter nos tests
+      # L'action v5 utilise Node.js 24 en interne
+      # Notre projet continue à utiliser Node.js 22
+      - name: Configurer Node.js
+        uses: actions/setup-node@v5
         with:
           node-version: '22'
           cache: npm
+
+      # Installer les dépendances du jeu
       - name: Installer les dépendances du jeu
         run: npm ci
+
+      # Exécuter les tests Jest du jeu ClickFast
       - name: Tester le compteur et le chrono
         run: npm test
+
+      # Installer les dépendances de l'API Node.js
       - name: Installer les dépendances de l'API
         run: npm ci
         working-directory: api
+
+      # Tester les routes et les erreurs de l'API
       - name: Tester les routes de l'API
         run: npm test
         working-directory: api
+
+  # DEUXIÈME TÂCHE : CONSTRUIRE LES IMAGES DOCKER
   build:
-    needs: test # Fail fast : si les tests échouent, aucune image n'est créée.
+
+    # La construction commence seulement si les tests réussissent
+    needs: test
+
+    # GitHub utilise une machine virtuelle Ubuntu
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
+
+      # Récupérer le code du projet
+      - name: Récupérer le code
+        uses: actions/checkout@v5
+
+      # Construire les trois images Docker du projet
       - name: Construire les trois images
         run: |
           docker build -t clickfast-web:test .
