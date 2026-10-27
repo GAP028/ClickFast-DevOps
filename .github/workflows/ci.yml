@@ -1,0 +1,33 @@
+name: ClickFast CI
+on:
+  push:
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Installer les dépendances du jeu
+        run: npm ci
+      - name: Tester le compteur et le chrono
+        run: npm test
+      - name: Installer les dépendances de l'API
+        run: npm ci
+        working-directory: api
+      - name: Tester les routes de l'API
+        run: npm test
+        working-directory: api
+  build:
+    needs: test # Fail fast : si les tests échouent, aucune image n'est créée.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Construire les trois images
+        run: |
+          docker build -t clickfast-web:test .
+          docker build -t clickfast-api:test ./api
+          docker build -t clickfast-stats:test ./stats-api

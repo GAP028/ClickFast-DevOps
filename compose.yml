@@ -1,0 +1,58 @@
+services:
+  db:
+    image: postgres:17.4-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?required}
+      POSTGRES_USER: ${POSTGRES_USER:?required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?required}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks: [private]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 3s
+      timeout: 2s
+      retries: 12
+
+  api:
+    build: ./api
+    environment: &db-env
+      DB_HOST: db
+      DB_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:?required}
+      POSTGRES_USER: ${POSTGRES_USER:?required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?required}
+    depends_on:
+      db: { condition: service_healthy }
+    networks: [private]
+
+  web:
+    build: .
+    ports:
+      - "${WEB_PORT:-8080}:8080"
+    depends_on: [api]
+    networks: [private]
+
+  adminer:
+    image: adminer:4.8.1
+    ports:
+      - "127.0.0.1:${ADMINER_PORT:-8081}:8080"
+    depends_on: [db]
+    networks: [private]
+
+  stats-api:
+    build: ./stats-api
+    environment: *db-env
+    ports:
+      - "127.0.0.1:${STATS_PORT:-8000}:8000"
+    depends_on:
+      db: { condition: service_healthy }
+    networks: [private]
+
+volumes:
+  pgdata:
+
+networks:
+  private:
+    driver: bridge

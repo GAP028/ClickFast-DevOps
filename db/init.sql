@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS scores (
+  id BIGSERIAL PRIMARY KEY,
+  username VARCHAR(30) NOT NULL,
+  score INTEGER NOT NULL CHECK (score >= 0 AND score <= 10000),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);

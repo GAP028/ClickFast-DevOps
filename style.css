@@ -1,0 +1,16 @@
+* { box-sizing: border-box; }
+body { margin: 0; background: #0f172a; color: #e2e8f0; font: 18px/1.5 system-ui, sans-serif; }
+#container { max-width: 700px; min-height: 100vh; margin: auto; padding: 40px 20px; }
+.flex-center { display: flex; flex-direction: column; align-items: center; text-align: center; }
+h1 { font-size: 3rem; margin-bottom: 0; color: #67e8f9; }
+.catchphrase { color: #cbd5e1; }
+#score { font-size: 3rem; color: #fbbf24; }
+#timer { color: #67e8f9; }
+button { padding: 14px 24px; margin: 6px; border: 0; border-radius: 12px; font-size: 1rem; font-weight: 700; cursor: pointer; }
+#button-clicker { background: #22d3ee; color: #082f49; }
+#button-reset { background: #334155; color: white; }
+button:disabled { cursor: not-allowed; opacity: .5; }
+input { padding: 12px; border-radius: 8px; border: 1px solid #64748b; }
+section { margin-top: 24px; width: min(100%, 420px); padding: 12px 24px; background: #1e293b; border-radius: 16px; }
+li { text-align: left; }
+#api-status { font-size: .85rem; color: #fbbf24; }
