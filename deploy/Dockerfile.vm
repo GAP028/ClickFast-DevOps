@@ -1,0 +1,48 @@
+# ============================================================
+# CLICKFAST — SERVEUR DE PRODUCTION SIMULÉ
+# Jour 2 : Déploiement automatisé
+# ============================================================
+
+# Image Docker-in-Docker :
+# permet d'exécuter Docker à l'intérieur d'un conteneur.
+FROM docker:28-dind
+
+# Installer le serveur SSH.
+RUN apk add --no-cache openssh
+
+# Préparer les dossiers nécessaires à SSH.
+RUN mkdir -p /root/.ssh /run/sshd \
+    && chmod 700 /root/.ssh
+
+# Configurer SSH :
+# - désactiver l'authentification par mot de passe ;
+# - autoriser les clés publiques ;
+# - autoriser root uniquement avec une clé SSH.
+RUN sed -i 's/^#*PasswordAuthentication.*/PasswordAuthentication no/' \
+        /etc/ssh/sshd_config \
+    && sed -i 's/^#*PubkeyAuthentication.*/PubkeyAuthentication yes/' \
+        /etc/ssh/sshd_config \
+    && sed -i 's/^#*PermitRootLogin.*/PermitRootLogin prohibit-password/' \
+        /etc/ssh/sshd_config
+
+# CORRECTION :
+# SSH utilisera une copie sécurisée de la clé publique.
+# Cela évite les problèmes de permissions des fichiers Windows.
+RUN sed -i \
+    's@^#*AuthorizedKeysFile.*@AuthorizedKeysFile .ssh/authorized_keys.secure@' \
+    /etc/ssh/sshd_config
+
+# Exposer le port SSH du conteneur.
+EXPOSE 22
+
+# Au démarrage du serveur :
+#
+# 1. Générer les clés d'identité du serveur SSH.
+# 2. Copier la clé publique montée depuis Windows.
+# 3. Appliquer les permissions sécurisées (600).
+# 4. Vérifier la configuration SSH.
+# 5. Démarrer SSH.
+# 6. Démarrer le moteur Docker.
+#
+# Si une étape échoue, le démarrage s'arrête.
+CMD ["sh", "-c", "ssh-keygen -A && cp /root/.ssh/authorized_keys /root/.ssh/authorized_keys.secure && chmod 600 /root/.ssh/authorized_keys.secure && /usr/sbin/sshd -t && /usr/sbin/sshd && exec dockerd"]
