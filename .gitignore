@@ -4,3 +4,5 @@ node_modules/
 *.log
 __pycache__/
 .pytest_cache/
+# Guide personnel : ne jamais publier sur GitHub
+GUIDE_PAS_A_PAS.md
