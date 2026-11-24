@@ -1,101 +1,134 @@
-# ClickFast ⚡ — DevOps Jour 1
+# ClickFast — Application web et chaîne DevOps
 
-Projet pédagogique de rattrapage d'Alain-Patrick Gomas, basé sur [OnyJ/ClickFast](https://github.com/OnyJ/ClickFast). **Ce travail est une copie locale, non publiée.**
+Jeu web : réaliser un maximum de clics en cinq secondes, enregistrer
+son score et consulter le classement.
 
-Jeu : cliquer le plus de fois en 5 secondes, enregistrer son score et afficher un classement. Stack : HTML/CSS/JS + Nginx non-root, Node.js/Express, PostgreSQL, Python/Flask, Docker Compose, Jest, GitHub Actions.
+Projet pédagogique réalisé à partir de [OnyJ/ClickFast](https://github.com/OnyJ/ClickFast).
+Mon travail porte sur la conteneurisation, l’intégration des services
+et l’automatisation de la livraison.
 
-![CI](https://github.com/REMPLACER_UTILISATEUR/REMPLACER_DEPOT/actions/workflows/ci.yml/badge.svg)
+## Fonctionnalités
 
-## Démarrer
+- Compteur de clics et chronomètre.
+- Enregistrement des scores et classement.
+- Service de statistiques.
+- Persistance des données dans PostgreSQL.
 
-Installer Docker et Docker Compose puis, à la racine du dépôt :
+## Technologies
+
+HTML, CSS, JavaScript, Nginx, Node.js, Express, PostgreSQL,
+Python, Flask, Docker Compose, Jest et GitHub Actions.
+
+## Mon travail
+
+- Configuration des services et de leur réseau avec Docker Compose.
+- Utilisation d’un volume pour conserver les données PostgreSQL.
+- Configuration du serveur web Nginx avec un utilisateur non-root.
+- Mise en place du pipeline de tests et de construction des images.
+- Ajout de la publication automatique des images sur Docker Hub.
+- Préparation d’un environnement de déploiement simulé avec SSH.
+- Résolution d’un problème d’authentification SSH lié aux permissions.
+
+## Architecture
+
+- **Web** : interface du jeu servie par Nginx.
+- **API** : serveur Express pour les scores.
+- **Base de données** : PostgreSQL.
+- **Statistiques** : service Python/Flask.
+- **Administration locale** : Adminer.
+
+Nginx transmet les requêtes `/api` au service Express.
+Les services communiquent sur le réseau Docker ; PostgreSQL
+n’expose pas de port sur la machine hôte.
+
+## Démarrage local
+
+### Prérequis
+
+- Docker avec Docker Compose.
+
+### Installation
 
 ```bash
+git clone https://github.com/GAP028/ClickFast-DevOps.git
+cd ClickFast-DevOps
+```
+
+Copier `.env.example` vers `.env` :
+
+```powershell
+# Windows PowerShell
+Copy-Item .env.example .env
+```
+
+```bash
+# Linux / macOS
 cp .env.example .env
-# Modifier POSTGRES_PASSWORD dans .env : choisir un mot de passe fort.
-docker compose -f compose.yml up --build -d
-docker compose ps
 ```
 
-- Jeu : http://localhost:8080 ; classement : http://localhost:8080/api/scores
-- Adminer : http://localhost:8081 ; système PostgreSQL ; serveur `db` ; identifiants de `.env`
-- Statistiques : http://localhost:8000/stats
+Configurer les variables du fichier `.env`, notamment
+`POSTGRES_PASSWORD`, puis démarrer les services :
 
 ```bash
-docker compose logs -f api
-docker compose stop db          # Simuler une panne : le jeu reste jouable
-docker compose start db         # Retrouver les scores
-docker compose down             # Arrêt sans supprimer les données
+docker compose -f compose.yml up --build -d
+docker compose -f compose.yml ps
 ```
 
-Attention : `docker compose down -v` efface les données stockées dans le volume.
+### Accès
 
-## Tester et automatiser (page 107 du cours)
+| Service | Adresse |
+|---|---|
+| Jeu | http://localhost:8080 |
+| Scores | http://localhost:8080/api/scores |
+| Statistiques | http://localhost:8000/stats |
+| Adminer | http://localhost:8081 |
+
+Dans Adminer, utiliser PostgreSQL, le serveur `db`
+et les identifiants configurés dans `.env`.
+
+### Arrêt
+
+```bash
+docker compose -f compose.yml down
+```
+
+Les données restent conservées dans le volume.
+L’option `down -v` supprime également les données du volume.
+
+## Tests
+
+À la racine du dépôt :
 
 ```bash
 npm ci
 npm test
+```
+
+Pour l’API :
+
+```bash
 cd api
 npm ci
 npm test
 ```
 
-Le workflow `.github/workflows/ci.yml` lance les tests puis construit les trois images sur chaque `push` ou `pull_request`. Grâce à `needs: test`, un test rouge empêche la construction. Publier ce travail dans **son propre dépôt** puis modifier l'URL du badge en remplaçant `REMPLACER_UTILISATEUR/REMPLACER_DEPOT` ; ne pas pousser sur le dépôt du professeur.
+## Intégration continue
 
-## Docker et publication
+Le workflow GitHub Actions se trouve dans `.github/workflows/ci.yml`.
 
-```bash
-docker build -t clickfast-web:1.0 .
-docker build -t clickfast-api:1.0 ./api
-docker build -t clickfast-stats:1.0 ./stats-api
-docker images
-docker run --rm clickfast-web:1.0 whoami
-docker run --rm clickfast-web:1.0 ls -a /usr/share/nginx/html
-```
+Il organise les vérifications et la construction des images Docker.
+La construction dépend de la réussite des tests.
 
-Le `whoami` doit indiquer un utilisateur autre que root. Pour publier sur Docker Hub, après `docker login` :
+La publication sur Docker Hub nécessite les secrets configurés
+dans GitHub Actions. Aucun identifiant ne doit être inscrit dans le code.
 
-```bash
-docker tag clickfast-web:1.0 MON_COMPTE/clickfast-web:1.0
-docker tag clickfast-api:1.0 MON_COMPTE/clickfast-api:1.0
-docker tag clickfast-stats:1.0 MON_COMPTE/clickfast-stats:1.0
-docker push MON_COMPTE/clickfast-web:1.0
-docker push MON_COMPTE/clickfast-api:1.0
-docker push MON_COMPTE/clickfast-stats:1.0
-```
+## État du projet
 
-Avec uniquement `compose.prod.yml` et un `.env` où `DOCKERHUB_USER=MON_COMPTE` et `IMAGE_TAG=1.0`, lancer `docker compose -f compose.prod.yml up -d` pour télécharger les images et redéployer sans le code.
+Application et configuration DevOps réalisées dans un cadre pédagogique.
 
-## Architecture
+Les tests et la construction ont été exécutés avec succès lors
+de la dernière vérification rapportée. L’environnement SSH simulé
+a également été testé.
 
-```text
-Navigateur -> Nginx web:8080 -> /api -> Express api:3000 -> PostgreSQL db:5432
-                                           Python stats-api:8000 -> db:5432
-                                           Adminer:8081 -> db:5432
-```
-
-PostgreSQL n'expose aucun port vers l'hôte. Le réseau Docker privé permet d'y accéder par le nom `db`. Le volume `pgdata` conserve les scores. Le `.env` n'est pas versionné. L'API emploie des requêtes SQL paramétrées et renvoie HTTP 503 si PostgreSQL tombe.
-
-## Journal de bord (mesures à faire sur ta machine)
-
-| Étape | Vérification | Résultat |
-|---|---|---|
-| 1 : jeu | 2 clics donnent 2 points ; compteur bloqué après 5 s | Code créé, validation navigateur à faire |
-| 2 : image Nginx | `whoami`, fichiers servis, taille de l'image | Docker non disponible ici, à mesurer |
-| 3 : scores | POST/GET, arrêt et recréation PostgreSQL en conservant volume | À tester |
-| 4 : réseau | `docker compose exec api getent hosts db` ; port 5432 inaccessible de l'hôte | À tester |
-| 5 : config | Retirer une variable `.env`, constater l'erreur | À tester |
-| 6 : Compose | `docker compose ps`, état Healthy de Postgres | À tester |
-| 7 : Python | `/stats` comparé au `COUNT(*)` SQL | À tester |
-| 8 : registry | Push Docker Hub, redéploiement sans sources | Nécessite le compte de l'étudiant |
-| 9 : mesures | Build froid/chaud, couches, tailles, réponse HTTP | À mesurer réellement |
-| 10 : panne | Couper DB, observer HTTP 503 et jeu jouable | À tester |
-| CI | Tests puis build dans GitHub Actions, badge | À vérifier après push |
-
-| Image | Taille | Couche max | Build froid | Build chaud | 1re réponse HTTP |
-|---|---|---|---|---|---|
-| Jeu | à mesurer | à mesurer | à mesurer | à mesurer | à mesurer |
-| API | à mesurer | à mesurer | à mesurer | à mesurer | à mesurer |
-| Stats | à mesurer | à mesurer | à mesurer | à mesurer | à mesurer |
-
-Commandes de diagnostic : `docker compose logs api`, `docker compose logs db`, `docker compose ps`, `docker stats --no-stream`, `docker network ls`, `docker volume ls`. Ne pas inventer d'observations : remplir le journal après les manipulations effectives.
+Le déploiement automatique complet reste à finaliser.
+Ce dépôt ne constitue pas un service exploité en production.
